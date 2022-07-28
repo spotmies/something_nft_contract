@@ -4,10 +4,10 @@ pragma solidity ^0.8.4;
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract pumpNdump is ERC721A, Ownable {
-    uint256 MAX_MINTS = 3;
-    uint256 WL_Mints = 30;
-    uint256 MAX_SUPPLY = 10000;
+contract something is ERC721A, Ownable {
+    uint256 MAX_MINTS = 10;
+    uint256 WL_Mints = 10;
+    uint256 MAX_SUPPLY = 3333;
     uint32 public mintTime;
     uint32 public whiteListerTime;
     bool paused = false;
@@ -19,7 +19,7 @@ contract pumpNdump is ERC721A, Ownable {
     string public baseURI = "ipfs://OUR-IPFS-BASE-URI/";
     mapping(address => bool) public whitelisted;
 
-    constructor(uint96 _royaltyFeesInBips, string memory _contractURI) ERC721A("Pumpendump", "PnD") {
+    constructor(uint96 _royaltyFeesInBips, string memory _contractURI) ERC721A("Something", "Some") {
         royaltyFeesInBips = _royaltyFeesInBips;
         contractURI = _contractURI;
         royaltyReceiver = msg.sender;
@@ -27,15 +27,14 @@ contract pumpNdump is ERC721A, Ownable {
 
     function mint(uint256 quantity) external payable {
         // _safeMint's second argument takes in a quantity, not a tokenId.
-        
-        if(whitelisted[msg.sender] != true) {
-            require(quantity + _numberMinted(msg.sender) <= MAX_MINTS, "You can't mint more than 3.");
-        } else {
-            require(quantity + _numberMinted(msg.sender) <= WL_Mints, "You can't mint more than 30.");
-        }
-        
+            require(quantity + _numberMinted(msg.sender) <= MAX_MINTS, "You can't mint more than 10.");
+            
+          //  if(_numberMinted(msg.sender) > 1 || quantity) {
+            //  require(msg.value > quantity
+           // }
+            
         if(block.timestamp < mintTime) {
-            require(quantity + _numberMinted(msg.sender) <= 30, "You can't mint more than 30.");
+            require(quantity + _numberMinted(msg.sender) <= 10, "You can't mint more than 10. WL");
         }
 
         require(totalSupply() + quantity <= MAX_SUPPLY, "Not enough tokens left");
