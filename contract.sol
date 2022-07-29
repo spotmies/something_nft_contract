@@ -8,7 +8,7 @@ contract something is ERC721A, Ownable {
     uint256 MAX_MINTS = 10;
     uint256 WL_Mints = 10;
     uint256 MAX_SUPPLY = 3333;
-    uint256 public mintPrice = 0.003 ether;
+    uint256 public mintPrice = 1 ether;
     uint32 public mintTime;
     uint32 public whiteListerTime;
     bool paused = false;
@@ -33,22 +33,24 @@ contract something is ERC721A, Ownable {
             
             if(msg.sender != owner() && whitelisted[msg.sender] != true) {
            if(_numberMinted(msg.sender) >= 1 && quantity >= 1) {
-             require(msg.value > quantity * mintPrice, "Not enough ether sent");
+             require(msg.value >= quantity * mintPrice, "Not enough ether sent");
            } else if (_numberMinted(msg.sender) < 1) {
                if(quantity > 1) {
-                 require(msg.value > (quantity - 1) * mintPrice, "Not enough ether sent.");
+                   number = quantity - 1;
+                 require(msg.value >= number * mintPrice, "Not enough ether sent.");
                } else if (quantity == 1) {
                     require(msg.value == 0, "Not enough ether sent.");
                }
            }
            } else if(whitelisted[msg.sender] == true) {
                if(_numberMinted(msg.sender) >= 3) {
-             require(msg.value > quantity * mintPrice, "Not enough ether sent");
-           } else if (_numberMinted(msg.sender) < 3) {
+
+             require(msg.value >= quantity * mintPrice, "no,Not enough ether sent");
+           } else if ( _numberMinted(msg.sender) < 3) {
                if(quantity + _numberMinted(msg.sender) > 3) {
-                 number = quantity + _numberMinted(msg.sender);
-                 require(msg.value > (number - 3) * mintPrice, "Not enough ether sent.");
-               } else if (quantity <= 3) {
+                 number = quantity - 3;
+                 require(msg.value >= number * mintPrice, "Not enough ether sent.");
+               } else if (quantity + _numberMinted(msg.sender) <= 3) {
                     require(msg.value == 0, "Not enough ether sent.");
                }
            }
