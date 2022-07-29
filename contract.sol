@@ -8,6 +8,7 @@ contract something is ERC721A, Ownable {
     uint256 MAX_MINTS = 10;
     uint256 WL_Mints = 10;
     uint256 MAX_SUPPLY = 3333;
+    uint256 public mintPrice = 0.003 ether;
     uint32 public mintTime;
     uint32 public whiteListerTime;
     bool paused = false;
@@ -15,6 +16,7 @@ contract something is ERC721A, Ownable {
     uint96 royaltyFeesInBips;
     address royaltyReceiver;
     string public contractURI;
+    uint256 number;
 
     string public baseURI = "ipfs://OUR-IPFS-BASE-URI/";
     mapping(address => bool) public whitelisted;
@@ -29,9 +31,29 @@ contract something is ERC721A, Ownable {
         // _safeMint's second argument takes in a quantity, not a tokenId.
             require(quantity + _numberMinted(msg.sender) <= MAX_MINTS, "You can't mint more than 10.");
             
-          //  if(_numberMinted(msg.sender) > 1 || quantity) {
-            //  require(msg.value > quantity
-           // }
+            if(msg.sender != owner() && whitelisted[msg.sender] != true) {
+           if(_numberMinted(msg.sender) >= 1 && quantity >= 1) {
+             require(msg.value > quantity * mintPrice, "Not enough ether sent");
+           } else if (_numberMinted(msg.sender) < 1) {
+               if(quantity > 1) {
+                 require(msg.value > (quantity - 1) * mintPrice, "Not enough ether sent.");
+               } else if (quantity == 1) {
+                    require(msg.value == 0, "Not enough ether sent.");
+               }
+           }
+           } else if(whitelisted[msg.sender] == true) {
+               if(_numberMinted(msg.sender) >= 3) {
+             require(msg.value > quantity * mintPrice, "Not enough ether sent");
+           } else if (_numberMinted(msg.sender) < 3) {
+               if(quantity + _numberMinted(msg.sender) > 3) {
+                 number = quantity + _numberMinted(msg.sender);
+                 require(msg.value > (number - 3) * mintPrice, "Not enough ether sent.");
+               } else if (quantity <= 3) {
+                    require(msg.value == 0, "Not enough ether sent.");
+               }
+           }
+           }
+          
             
         if(block.timestamp < mintTime) {
             require(quantity + _numberMinted(msg.sender) <= 10, "You can't mint more than 10. WL");
