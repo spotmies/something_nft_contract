@@ -8,7 +8,7 @@ contract something is ERC721A, Ownable {
     uint256 MAX_MINTS = 10;
     uint256 WL_Mints = 10;
     uint256 MAX_SUPPLY = 3333;
-    uint256 public mintPrice = 1 ether;
+    uint256 public mintPrice = 0.003 ether;
     uint32 public mintTime;
     uint32 public whiteListerTime;
     bool paused = false;
