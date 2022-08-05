@@ -7,7 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract something is ERC721A, Ownable {
     uint256 MAX_MINTS = 10;
     uint256 WL_Mints = 10;
-    uint256 MAX_SUPPLY = 3333;
+    uint256 MAX_SUPPLY = 4444;
+    uint256 public mintPrice = 0.005 ether;
+    uint256 public wlMintPrice = 0.003 ether;
     uint32 public mintTime;
     uint32 public whiteListerTime;
     bool paused = false;
@@ -15,6 +17,8 @@ contract something is ERC721A, Ownable {
     uint96 royaltyFeesInBips;
     address royaltyReceiver;
     string public contractURI;
+    uint256 number;
+    uint256 amount;
 
     string public baseURI = "ipfs://OUR-IPFS-BASE-URI/";
     mapping(address => bool) public whitelisted;
@@ -29,9 +33,24 @@ contract something is ERC721A, Ownable {
         // _safeMint's second argument takes in a quantity, not a tokenId.
             require(quantity + _numberMinted(msg.sender) <= MAX_MINTS, "You can't mint more than 10.");
             
-          //  if(_numberMinted(msg.sender) > 1 || quantity) {
-            //  require(msg.value > quantity
-           // }
+            if(msg.sender != owner() && whitelisted[msg.sender] != true) {
+                amount = quantity * mintPrice;
+              if(_numberMinted(msg.sender)==0){
+                  amount = amount - mintPrice;
+                  require(msg.value >= amount, "Not enough ethers sent");
+              }else{
+                  require(msg.value >= amount, "Not enough ethers sent");
+              }
+           } else if(whitelisted[msg.sender] == true) {
+               amount = quantity * wlMintPrice;
+                  if(_numberMinted(msg.sender)==0){
+                  amount = amount - wlMintPrice;
+                  require(msg.value >= amount, "Not enough ethers sent");
+              }else{
+                  require(msg.value >= amount, "Not enough ethers sent");
+              }
+           }
+          
             
         if(block.timestamp < mintTime) {
             require(quantity + _numberMinted(msg.sender) <= 10, "You can't mint more than 10. WL");
@@ -57,7 +76,7 @@ contract something is ERC721A, Ownable {
 
     function withdraw() external payable onlyOwner {
         //Developer's stake
-        uint256 ds = address(this).balance * 12 / 100;
+        uint256 ds = address(this).balance * 25 / 100;
         payable(DeveloperAddress).transfer(ds);
         
         //Owner's stake
@@ -115,6 +134,10 @@ contract something is ERC721A, Ownable {
     function suppliedNFTs() public view returns(uint256) {
         return totalSupply();
     }
+
+    function userMint() public view returns(uint256) {
+        return _numberMinted(msg.sender);
+    } 
 
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
