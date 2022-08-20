@@ -3,39 +3,61 @@ pragma solidity ^0.8.4;
 
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract something is ERC721A, Ownable {
     uint256 MAX_MINTS = 10;
     uint256 WL_Mints = 10;
-    uint256 MAX_SUPPLY = 3333;
-    uint32 public mintTime;
-    uint32 public whiteListerTime;
+    uint256 MAX_SUPPLY = 4444;
+    uint256 public mintPrice = 0.005 ether;
+    uint256 public wlMintPrice = 0.002 ether;
+    uint32 public mintTime = 1660917600;
+    uint32 public whiteListerTime = 1660917600;
     bool paused = false;
-    address DeveloperAddress;
+    address DeveloperAddress = 0xB96DfC3e4cBE9Da6F072d57c13b5EfB44c8b192C;
+    address OwnerAddress = 0x2E3D02c126E75Ad3B4c95DB3A78E83044d39bf31;
     uint96 royaltyFeesInBips;
     address royaltyReceiver;
-    string public contractURI;
+    uint256 number;
+    uint256 amount;
+    string contractURI;
+    bytes32 public root;
+    bool public checkWL;
 
-    string public baseURI = "ipfs://OUR-IPFS-BASE-URI/";
+    string public baseURI = "https://itssomethingnft.mypinata.cloud/ipfs/QmRqbzdQ9GiHcLjm7EfzyYQ1NrjvBCdhfaqXPuR56WKm46/";
     mapping(address => bool) public whitelisted;
 
-    constructor(uint96 _royaltyFeesInBips, string memory _contractURI) ERC721A("Something", "Some") {
+    constructor(uint96 _royaltyFeesInBips, string memory _contractURI, bytes32 _root) ERC721A("It'sSomething", "SOMETHING") {
         royaltyFeesInBips = _royaltyFeesInBips;
         contractURI = _contractURI;
+        root = _root;
         royaltyReceiver = msg.sender;
     }
 
-    function mint(uint256 quantity) external payable {
+    function mint(uint256 quantity, bytes32[] memory proof, bytes32 leaf) external payable {
         // _safeMint's second argument takes in a quantity, not a tokenId.
-            require(quantity + _numberMinted(msg.sender) <= MAX_MINTS, "You can't mint more than 10.");
-            
-          //  if(_numberMinted(msg.sender) > 1 || quantity) {
-            //  require(msg.value > quantity
-           // }
-            
-        if(block.timestamp < mintTime) {
-            require(quantity + _numberMinted(msg.sender) <= 10, "You can't mint more than 10. WL");
-        }
+           require(quantity + _numberMinted(msg.sender) <= MAX_MINTS, "You can't mint more than 10.");
+           require(keccak256(abi.encodePacked(msg.sender)) == leaf, "You are not genuine"); 
+           
+           checkWL = MerkleVerify(proof, leaf);
+
+           if(checkWL) {
+               amount = quantity * 0.002 ether;
+               if(_numberMinted(msg.sender) == 0) {
+               amount = amount - 0.002 ether;
+           }
+           } else {
+               amount = quantity * 0.005 ether;
+               if(_numberMinted(msg.sender) == 0) {
+               amount = amount - 0.005 ether;
+           }
+               
+           }
+
+            require(msg.value >= amount, "Not enough ethers sent");
+        // if(block.timestamp < mintTime) {
+        //     require(block.timestamp >= mintTime,"Mint not yet started");
+        // }
 
         require(totalSupply() + quantity <= MAX_SUPPLY, "Not enough tokens left");
 
@@ -55,13 +77,25 @@ contract something is ERC721A, Ownable {
         _safeMint(msg.sender, quantity);
     }
 
+    function MerkleVerify(bytes32[] memory proof, bytes32 leaf) public view returns (bool) {
+        return MerkleProof.verify(proof, root, leaf);
+    }
+
+    function addRootHash(bytes32 _root) public onlyOwner {
+        root = _root;
+    }
+
+    function ChangeOwner(address _OwnerAddress) public onlyOwner {
+        OwnerAddress = _OwnerAddress;
+    }
+
     function withdraw() external payable onlyOwner {
         //Developer's stake
-        uint256 ds = address(this).balance * 12 / 100;
+        uint256 ds = address(this).balance * 25 / 100;
         payable(DeveloperAddress).transfer(ds);
         
         //Owner's stake
-        payable(owner()).transfer(address(this).balance);
+        payable(OwnerAddress).transfer(address(this).balance);
     }
 
     function setWLTimer(uint32 _whitestamp) public onlyOwner {
@@ -115,6 +149,10 @@ contract something is ERC721A, Ownable {
     function suppliedNFTs() public view returns(uint256) {
         return totalSupply();
     }
+
+    function userMint() public view returns(uint256) {
+        return _numberMinted(msg.sender);
+    } 
 
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
